@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucky Jet Predictor</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('https://i.gifer.com/7rd3.gif') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        #container {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        h1 {
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            color: white;
+            background-color: #6a0dad;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .button:hover {
+            background-color: #7b2fbf;
+        }
+        #signal {
+            font-size: 32px;
+            margin-top: 20px;
+            color: #00ff00;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Lucky Jet Predictor</h1>
+        <div id="signal">Ожидание сигнала...</div>
+        <button id="fetchSignal" class="button">Получить Сигнал На Следующий Раунд</button>
+    </div>
+
+    <script>
+        document.getElementById('fetchSignal').addEventListener('click', async () => {
+            const signalElement = document.getElementById('signal');
+            signalElement.textContent = 'Получение данных...';
+
+            try {
+                // Функция Puppeteer для автоматического чтения коэффициентов
+                const puppeteerScript = async () => {
+                    const puppeteer = require('puppeteer');
+                    const browser = await puppeteer.launch({ headless: true });
+                    const page = await browser.newPage();
+
+                    await page.goto('https://1win.com/casino/play/1play_1play_luckyjet', {
+                        waitUntil: 'networkidle2',
+                    });
+
+                    const selector = '#history-item-0';
+                    await page.waitForSelector(selector, { timeout: 10000 });
+
+                    const coefficient = await page.evaluate((sel) => {
+                        const element = document.querySelector(sel);
+                        return element ? element.textContent.trim() : 'Коэффициент не найден';
+                    }, selector);
+
+                    await browser.close();
+                    return coefficient;
+                };
+
+                const coefficient = await puppeteerScript();
+
+                // Установить сигнал для текущего раунда
+                if (coefficient && coefficient !== 'Коэффициент не найден') {
+                    const numericCoefficient = parseFloat(coefficient.replace('x', ''));
+                    const recommended = (numericCoefficient * 0.8).toFixed(2); // Рекомендуемое значение для забора
+                    signalElement.textContent = `Забрать на коэффициенте: ${recommended}`;
+                } else {
+                    signalElement.textContent = 'Ошибка получения коэффициента!';
+                }
+            } catch (error) {
+                signalElement.textContent = 'Ошибка при получении данных!';
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>
